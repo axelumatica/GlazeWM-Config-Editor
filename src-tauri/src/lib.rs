@@ -1,7 +1,6 @@
 use chrono::Local;
 use std::fs;
 use std::path::PathBuf;
-use tauri::{Manager, Runtime};
 
 /// Returns the default GlazeWM config path on Windows:
 /// %USERPROFILE%\.glaze-wm\config.yaml
@@ -61,9 +60,6 @@ async fn check_glazewm_running() -> bool {
 async fn send_ipc_reload() -> Result<(), String> {
     #[cfg(target_os = "windows")]
     {
-        use std::io::Write;
-        use std::net::TcpStream;
-
         // GlazeWM v3 uses a WebSocket on a dynamic port.
         // Fallback: try to find the port from the lock file or use the default.
         // For simplicity we issue a command via the glazewm CLI if it is on PATH.
@@ -95,10 +91,11 @@ pub fn run() {
             check_glazewm_running,
             send_ipc_reload,
         ])
-        .setup(|app| {
+        .setup(|_app| {
             #[cfg(debug_assertions)]
             {
-                let window = app.get_webview_window("main").unwrap();
+                use tauri::Manager;
+                let window = _app.get_webview_window("main").unwrap();
                 window.open_devtools();
             }
             Ok(())
