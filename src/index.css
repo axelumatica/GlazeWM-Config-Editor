@@ -1,0 +1,139 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    box-sizing: border-box;
+  }
+
+  html, body, #root {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    background-color: #0e0e12;
+    color: #e8e8f0;
+  }
+
+  /* Scrollbar styling */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #343444;
+    border-radius: 3px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: #4f57e8;
+  }
+
+  /* Selection */
+  ::selection {
+    background: rgba(99, 114, 243, 0.3);
+  }
+}
+
+@layer components {
+  .glass-panel {
+    @apply bg-surface-2 border border-surface-4 rounded-xl;
+  }
+
+  .btn-primary {
+    @apply bg-glaze-600 hover:bg-glaze-500 text-white font-medium px-4 py-2 rounded-lg transition-colors duration-150 disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .btn-ghost {
+    @apply hover:bg-surface-4 text-gray-300 hover:text-white font-medium px-3 py-1.5 rounded-lg transition-colors duration-150;
+  }
+
+  .btn-danger {
+    @apply bg-red-600/20 hover:bg-red-600/30 text-red-400 hover:text-red-300 border border-red-600/30 font-medium px-3 py-1.5 rounded-lg transition-colors duration-150;
+  }
+
+  .input-field {
+    @apply bg-surface-3 border border-surface-5 text-gray-100 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-glaze-500 focus:ring-1 focus:ring-glaze-500/30 transition-colors;
+  }
+
+  .section-label {
+    @apply text-xs font-semibold uppercase tracking-widest text-gray-500 mb-3;
+  }
+
+  .config-row {
+    @apply flex items-center justify-between py-3 border-b border-surface-4 last:border-0;
+  }
+
+  .badge {
+    @apply text-xs font-medium px-2 py-0.5 rounded-full;
+  }
+
+  .badge-green {
+    @apply badge bg-emerald-500/20 text-emerald-400 border border-emerald-500/30;
+  }
+
+  .badge-yellow {
+    @apply badge bg-amber-500/20 text-amber-400 border border-amber-500/30;
+  }
+
+  .badge-red {
+    @apply badge bg-red-500/20 text-red-400 border border-red-500/30;
+  }
+
+  .badge-blue {
+    @apply badge bg-glaze-500/20 text-glaze-300 border border-glaze-500/30;
+  }
+}
+
+/* CodeMirror / textarea YAML editor */
+.yaml-editor {
+  font-family: "JetBrains Mono", "Fira Code", Consolas, monospace;
+  font-size: 13px;
+  line-height: 1.6;
+  tab-size: 2;
+  resize: none;
+  outline: none;
+  background: transparent;
+  color: #c8d3f5;
+  width: 100%;
+  height: 100%;
+  white-space: pre;
+  overflow-wrap: normal;
+  overflow-x: auto;
+}
+
+.yaml-editor:focus {
+  outline: none;
+}
+
+/* Animated save button pulse */
+@keyframes save-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(99, 114, 243, 0.4); }
+  50% { box-shadow: 0 0 0 8px rgba(99, 114, 243, 0); }
+}
+
+.save-pulse {
+  animation: save-pulse 2s ease-in-out infinite;
+}
+
+/* Smooth slide-in for panels */
+@keyframes slide-in-right {
+  from { transform: translateX(100%); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+.slide-in-right {
+  animation: slide-in-right 0.2s ease-out;
+}
+
+/* Toast fade in */
+@keyframes toast-in {
+  from { transform: translateY(10px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.toast-in {
+  animation: toast-in 0.2s ease-out;
+}
