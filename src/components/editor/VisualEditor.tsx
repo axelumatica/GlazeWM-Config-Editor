@@ -1,9 +1,16 @@
 import { useCallback } from "react";
-import type { GlazeConfig, GeneralConfig, GapsConfig, FocusBordersConfig } from "@/types";
+import type {
+  GlazeConfig,
+  GeneralConfig,
+  GapsConfig,
+  WindowEffectsConfig,
+  WindowBehaviorConfig,
+} from "@/types";
 import { stringifyYaml } from "@/lib/yaml-utils";
 import { GeneralSection } from "./sections/GeneralSection";
 import { GapsSection } from "./sections/GapsSection";
-import { FocusBordersSection } from "./sections/FocusBordersSection";
+import { WindowEffectsSection } from "./sections/WindowEffectsSection";
+import { WindowBehaviorSection } from "./sections/WindowBehaviorSection";
 import { WorkspacesSection } from "./sections/WorkspacesSection";
 import { KeybindingsSection } from "./sections/KeybindingsSection";
 import { WindowRulesSection } from "./sections/WindowRulesSection";
@@ -31,9 +38,13 @@ export function VisualEditor({ config, onYamlChange }: Props) {
     [config, updateConfig]
   );
 
-  const updateFocusBorders = useCallback(
-    (focusBorders: FocusBordersConfig) =>
-      updateConfig({ ...config, focus_borders: focusBorders }),
+  const updateWindowEffects = useCallback(
+    (window_effects: WindowEffectsConfig) => updateConfig({ ...config, window_effects }),
+    [config, updateConfig]
+  );
+
+  const updateWindowBehavior = useCallback(
+    (window_behavior: WindowBehaviorConfig) => updateConfig({ ...config, window_behavior }),
     [config, updateConfig]
   );
 
@@ -47,9 +58,13 @@ export function VisualEditor({ config, onYamlChange }: Props) {
         config={config.gaps ?? {}}
         onChange={updateGaps}
       />
-      <FocusBordersSection
-        config={config.focus_borders ?? {}}
-        onChange={updateFocusBorders}
+      <WindowEffectsSection
+        config={config.window_effects ?? {}}
+        onChange={updateWindowEffects}
+      />
+      <WindowBehaviorSection
+        config={config.window_behavior ?? {}}
+        onChange={updateWindowBehavior}
       />
       <WorkspacesSection
         workspaces={config.workspaces ?? []}

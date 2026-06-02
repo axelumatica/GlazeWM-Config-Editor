@@ -25,7 +25,7 @@ export function stringifyYaml(config: GlazeConfig): string {
     indent: 2,
     lineWidth: 120,
     noRefs: true,
-    quotingType: '"',
+    quotingType: "'",
     forceQuotes: false,
   });
 }
@@ -46,94 +46,148 @@ export function formatTimestamp(iso: string): string {
 }
 
 export const DEFAULT_CONFIG_YAML = `general:
-  focus_follows_cursor: false
-  toggle_workspace_on_refocus: true
-  cursor_follows_focus: false
-  show_floating_on_top: false
-  center_new_floating_windows: true
-  window_animations: "off"
+  startup_commands: ['shell-exec zebar']
+  shutdown_commands: []
+  config_reload_commands: []
+  focus_follows_cursor: true
+  toggle_workspace_on_refocus: false
+  cursor_jump:
+    enabled: true
+    trigger: 'window_focus'
+  hide_method: 'cloak'
+  show_all_in_taskbar: false
 
 gaps:
-  inner_gap: 8
+  scale_with_dpi: true
+  inner_gap: '7px'
   outer_gap:
-    top: 40
-    right: 8
-    bottom: 8
-    left: 8
+    top: '8px'
+    right: '8px'
+    bottom: '8px'
+    left: '8px'
 
-focus_borders:
-  active:
-    enabled: true
-    color: "#6272f3"
-    width: 2
-  inactive:
-    enabled: false
-    color: "#343444"
-    width: 1
+window_effects:
+  focused_window:
+    border:
+      enabled: true
+      color: '#447aba'
+      width: '2px'
+    hide_title_bar:
+      enabled: false
+    corner_style:
+      enabled: true
+      style: 'square'
+    transparency:
+      enabled: false
+      opacity: '95%'
+  other_windows:
+    border:
+      enabled: true
+      color: '#3c3c3c'
+    hide_title_bar:
+      enabled: false
+    corner_style:
+      enabled: false
+      style: 'rounded'
+    transparency:
+      enabled: false
+      opacity: '100%'
 
-bar:
-  height: "30px"
-  position: "top"
-  opacity: 1.0
-  background: "#0e0e12"
-  foreground: "#e8e8f0"
-  font_family: "JetBrains Mono"
-  font_size: "12px"
-  components_left:
-    - type: "workspaces"
-  components_center:
-    - type: "window title"
-  components_right:
-    - type: "tiling direction"
-      label_tiling: "[ ]"
-      label_floating: "[~]"
-    - type: "clock"
-      time_formatting: "HH:mm  ddd d MMM"
+window_behavior:
+  initial_state: 'tiling'
+  state_defaults:
+    floating:
+      centered: true
+      shown_on_top: true
+    fullscreen:
+      maximized: false
+      shown_on_top: false
 
 workspaces:
-  - name: "1"
-  - name: "2"
-  - name: "3"
-  - name: "4"
-  - name: "5"
-  - name: "6"
-  - name: "7"
-  - name: "8"
-  - name: "9"
+  - name: '1'
+  - name: '2'
+  - name: '3'
+  - name: '4'
+  - name: '5'
+  - name: '6'
+  - name: '7'
+  - name: '8'
+  - name: '9'
 
 window_rules:
-  - command: "ignore"
-    match_process_name: "Taskmgr"
-  - command: "ignore"
-    match_process_name: "ScreenClippingHost"
+  - commands: ['ignore']
+    match:
+      - window_process: { equals: 'Taskmgr' }
+  - commands: ['ignore']
+    match:
+      - window_title: { regex: '[Pp]icture.in.[Pp]icture' }
+        window_class: { regex: 'Chrome_WidgetWin_1|MozillaDialogClass' }
 
 keybindings:
-  - bindings: ["Alt+H"]
-    command: "focus left"
-  - bindings: ["Alt+J"]
-    command: "focus down"
-  - bindings: ["Alt+K"]
-    command: "focus up"
-  - bindings: ["Alt+L"]
-    command: "focus right"
-  - bindings: ["Alt+Shift+H"]
-    command: "move left"
-  - bindings: ["Alt+Shift+J"]
-    command: "move down"
-  - bindings: ["Alt+Shift+K"]
-    command: "move up"
-  - bindings: ["Alt+Shift+L"]
-    command: "move right"
-  - bindings: ["Alt+Q"]
-    command: "close"
-  - bindings: ["Alt+Space"]
-    command: "toggle floating"
-  - bindings: ["Alt+1"]
-    command: "focus workspace 1"
-  - bindings: ["Alt+2"]
-    command: "focus workspace 2"
-  - bindings: ["Alt+3"]
-    command: "focus workspace 3"
-  - bindings: ["Alt+Shift+E"]
-    command: "quit"
+  - commands: ['focus --direction left']
+    bindings: ['alt+h', 'alt+left']
+  - commands: ['focus --direction right']
+    bindings: ['alt+l', 'alt+right']
+  - commands: ['focus --direction up']
+    bindings: ['alt+k', 'alt+up']
+  - commands: ['focus --direction down']
+    bindings: ['alt+j', 'alt+down']
+  - commands: ['move --direction left']
+    bindings: ['alt+shift+h', 'alt+shift+left']
+  - commands: ['move --direction right']
+    bindings: ['alt+shift+l', 'alt+shift+right']
+  - commands: ['move --direction up']
+    bindings: ['alt+shift+k', 'alt+shift+up']
+  - commands: ['move --direction down']
+    bindings: ['alt+shift+j', 'alt+shift+down']
+  - commands: ['toggle-floating --centered']
+    bindings: ['alt+shift+space']
+  - commands: ['toggle-tiling']
+    bindings: ['alt+t']
+  - commands: ['toggle-fullscreen']
+    bindings: ['alt+f']
+  - commands: ['toggle-minimized']
+    bindings: ['alt+m']
+  - commands: ['close']
+    bindings: ['alt+q']
+  - commands: ['wm-exit']
+    bindings: ['alt+shift+e']
+  - commands: ['wm-reload-config']
+    bindings: ['alt+shift+r']
+  - commands: ['focus --workspace 1']
+    bindings: ['alt+1']
+  - commands: ['focus --workspace 2']
+    bindings: ['alt+2']
+  - commands: ['focus --workspace 3']
+    bindings: ['alt+3']
+  - commands: ['focus --workspace 4']
+    bindings: ['alt+4']
+  - commands: ['focus --workspace 5']
+    bindings: ['alt+5']
+  - commands: ['focus --workspace 6']
+    bindings: ['alt+6']
+  - commands: ['focus --workspace 7']
+    bindings: ['alt+7']
+  - commands: ['focus --workspace 8']
+    bindings: ['alt+8']
+  - commands: ['focus --workspace 9']
+    bindings: ['alt+9']
+  - commands: ['move --workspace 1', 'focus --workspace 1']
+    bindings: ['alt+shift+1']
+  - commands: ['move --workspace 2', 'focus --workspace 2']
+    bindings: ['alt+shift+2']
+  - commands: ['move --workspace 3', 'focus --workspace 3']
+    bindings: ['alt+shift+3']
+  - commands: ['move --workspace 4', 'focus --workspace 4']
+    bindings: ['alt+shift+4']
+  - commands: ['move --workspace 5', 'focus --workspace 5']
+    bindings: ['alt+shift+5']
+  - commands: ['move --workspace 6', 'focus --workspace 6']
+    bindings: ['alt+shift+6']
+  - commands: ['move --workspace 7', 'focus --workspace 7']
+    bindings: ['alt+shift+7']
+  - commands: ['move --workspace 8', 'focus --workspace 8']
+    bindings: ['alt+shift+8']
+  - commands: ['move --workspace 9', 'focus --workspace 9']
+    bindings: ['alt+shift+9']
 `;

@@ -1,8 +1,8 @@
 export interface GlazeConfig {
   general?: GeneralConfig;
   gaps?: GapsConfig;
-  focus_borders?: FocusBordersConfig;
-  bar?: BarConfig;
+  window_effects?: WindowEffectsConfig;
+  window_behavior?: WindowBehaviorConfig;
   workspaces?: WorkspaceConfig[];
   window_rules?: WindowRule[];
   binding_modes?: BindingMode[];
@@ -10,64 +10,76 @@ export interface GlazeConfig {
 }
 
 export interface GeneralConfig {
+  startup_commands?: string[];
+  shutdown_commands?: string[];
+  config_reload_commands?: string[];
   focus_follows_cursor?: boolean;
   toggle_workspace_on_refocus?: boolean;
-  cursor_follows_focus?: boolean;
-  show_floating_on_top?: boolean;
-  center_new_floating_windows?: boolean;
-  window_animations?: "off" | "true" | string;
+  cursor_jump?: CursorJumpConfig;
+  hide_method?: "cloak" | "hide";
+  show_all_in_taskbar?: boolean;
+}
+
+export interface CursorJumpConfig {
+  enabled?: boolean;
+  trigger?: "monitor_focus" | "window_focus";
 }
 
 export interface GapsConfig {
-  inner_gap?: number | string;
-  outer_gap?: OuterGap | number | string;
+  scale_with_dpi?: boolean;
+  inner_gap?: string | number;
+  outer_gap?: OuterGap | string | number;
 }
 
 export interface OuterGap {
-  top?: number | string;
-  right?: number | string;
-  bottom?: number | string;
-  left?: number | string;
+  top?: string | number;
+  right?: string | number;
+  bottom?: string | number;
+  left?: string | number;
 }
 
-export interface FocusBordersConfig {
-  active?: BorderConfig;
-  inactive?: BorderConfig;
+export interface WindowEffectsConfig {
+  focused_window?: WindowEffectSet;
+  other_windows?: WindowEffectSet;
 }
 
-export interface BorderConfig {
+export interface WindowEffectSet {
+  border?: BorderEffect;
+  hide_title_bar?: { enabled?: boolean };
+  corner_style?: CornerStyleEffect;
+  transparency?: TransparencyEffect;
+}
+
+export interface BorderEffect {
   enabled?: boolean;
   color?: string;
-  width?: number;
+  width?: string;
 }
 
-export interface BarConfig {
-  height?: string | number;
-  position?: "top" | "bottom";
-  opacity?: number;
-  background?: string;
-  foreground?: string;
-  font_family?: string;
-  font_size?: string;
-  padding?: string;
-  offset_x?: string;
-  offset_y?: string;
-  border_radius?: string;
-  components_left?: BarComponent[];
-  components_center?: BarComponent[];
-  components_right?: BarComponent[];
+export interface CornerStyleEffect {
+  enabled?: boolean;
+  style?: "square" | "rounded" | "small_rounded";
 }
 
-export interface BarComponent {
-  type: string;
-  template?: string;
-  label_pinned?: string;
-  label_not_pinned?: string;
-  foreground?: string;
-  background?: string;
-  margin?: string;
-  padding?: string;
-  [key: string]: unknown;
+export interface TransparencyEffect {
+  enabled?: boolean;
+  opacity?: string;
+}
+
+export interface WindowBehaviorConfig {
+  initial_state?: "tiling" | "floating";
+  state_defaults?: StateDefaults;
+}
+
+export interface StateDefaults {
+  floating?: {
+    centered?: boolean;
+    shown_on_top?: boolean;
+  };
+  fullscreen?: {
+    maximized?: boolean;
+    shown_on_top?: boolean;
+  };
 }
 
 export interface WorkspaceConfig {
@@ -77,11 +89,15 @@ export interface WorkspaceConfig {
   bind_to_monitor?: number;
 }
 
+export interface MatchCondition {
+  window_process?: { equals?: string; regex?: string; not_regex?: string };
+  window_class?: { equals?: string; regex?: string; not_regex?: string };
+  window_title?: { equals?: string; regex?: string; not_regex?: string };
+}
+
 export interface WindowRule {
-  command: string;
-  match_process_name?: string;
-  match_class_name?: string;
-  match_title?: string;
+  commands: string[];
+  match?: MatchCondition[];
 }
 
 export interface BindingMode {
@@ -91,8 +107,7 @@ export interface BindingMode {
 
 export interface Keybinding {
   bindings: string[];
-  command?: string;
-  commands?: string[];
+  commands: string[];
 }
 
 export interface ConfigProfile {
