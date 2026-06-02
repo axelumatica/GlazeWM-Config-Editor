@@ -1,6 +1,6 @@
 import { useReducer, useCallback, useEffect } from "react";
 import type { AppState, GlazeConfig, ConfigProfile, HistoryEntry } from "@/types";
-import { parseYaml, generateId, DEFAULT_CONFIG_YAML } from "@/lib/yaml-utils";
+import { parseYaml, DEFAULT_CONFIG_YAML } from "@/lib/yaml-utils";
 import {
   loadProfiles,
   saveProfiles,
