@@ -2,13 +2,18 @@ use chrono::Local;
 use std::fs;
 use std::path::PathBuf;
 
-/// Returns the default GlazeWM config path on Windows:
-/// %USERPROFILE%\.glaze-wm\config.yaml
+/// Returns the GlazeWM config path, checking both v3 and v2 locations:
+/// v3: %USERPROFILE%\.glzr\glazewm\config.yaml
+/// v2: %USERPROFILE%\.glaze-wm\config.yaml
 #[tauri::command]
 fn get_glaze_config_path() -> Result<String, String> {
     let home = dirs::home_dir().ok_or("Cannot determine home directory")?;
-    let path = home.join(".glaze-wm").join("config.yaml");
-    Ok(path.to_string_lossy().to_string())
+    let v3_path = home.join(".glzr").join("glazewm").join("config.yaml");
+    if v3_path.exists() {
+        return Ok(v3_path.to_string_lossy().to_string());
+    }
+    let v2_path = home.join(".glaze-wm").join("config.yaml");
+    Ok(v2_path.to_string_lossy().to_string())
 }
 
 /// Archive (copy) the current config file to a history directory with a timestamp.
@@ -79,6 +84,16 @@ async fn send_ipc_reload() -> Result<(), String> {
     }
 }
 
+/// Returns the app data directory for storing history backups.
+#[tauri::command]
+fn get_app_data_dir(app: tauri::AppHandle) -> Result<String, String> {
+    use tauri::Manager;
+    app.path()
+        .app_data_dir()
+        .map(|p| p.to_string_lossy().to_string())
+        .map_err(|e| format!("Could not get app data dir: {e}"))
+}
+
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
@@ -87,6 +102,7 @@ pub fn run() {
         .plugin(tauri_plugin_shell::init())
         .invoke_handler(tauri::generate_handler![
             get_glaze_config_path,
+            get_app_data_dir,
             archive_config,
             check_glazewm_running,
             send_ipc_reload,

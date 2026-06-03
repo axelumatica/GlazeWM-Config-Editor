@@ -63,6 +63,15 @@ export async function checkGlazeWmRunning(): Promise<boolean> {
   }
 }
 
+export async function getAppDataDir(): Promise<string | null> {
+  if (!isTauri()) return null;
+  try {
+    return await invoke<string>("get_app_data_dir");
+  } catch {
+    return null;
+  }
+}
+
 export async function archiveConfig(
   configPath: string,
   archiveDir: string

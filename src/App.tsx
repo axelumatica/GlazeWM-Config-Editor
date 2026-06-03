@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import {
   Save,
   Undo2,
@@ -36,17 +36,88 @@ export default function App() {
     deleteProfile,
     updateProfileYaml,
     restoreHistory,
+    setGlazeStatus,
     canUndo,
     canRedo,
   } = useAppState();
 
   const { toasts, addToast, removeToast } = useToast();
   const [sidePanel, setSidePanel] = useState<SidePanel>(null);
+  const [glazeConfigPath, setGlazeConfigPath] = useState<string | null>(null);
 
-  const handleSave = useCallback(() => {
-    saveConfig("Manual save");
-    addToast("success", "Config saved — restore point created");
-  }, [saveConfig, addToast]);
+  useEffect(() => {
+    async function init() {
+      try {
+        const {
+          getGlazeConfigPath,
+          readConfigFile,
+          checkGlazeWmRunning,
+        } = await import("@/lib/tauri-bridge");
+
+        const path = await getGlazeConfigPath();
+        if (path) {
+          setGlazeConfigPath(path);
+          const content = await readConfigFile(path);
+          setYaml(content);
+        }
+
+        const running = await checkGlazeWmRunning();
+        setGlazeStatus(running ? "running" : "stopped");
+
+        const statusInterval = setInterval(async () => {
+          const r = await checkGlazeWmRunning();
+          setGlazeStatus(r ? "running" : "stopped");
+        }, 5000);
+        return () => clearInterval(statusInterval);
+      } catch {
+        setGlazeStatus("unknown");
+      }
+    }
+    init();
+  }, []);
+
+  const handleSave = useCallback(async () => {
+    if (state.parseError) {
+      addToast("error", "Fix YAML errors before saving");
+      return;
+    }
+    try {
+      const {
+        getGlazeConfigPath,
+        writeConfigFile,
+        archiveConfig,
+        sendIpcReload,
+        getAppDataDir,
+      } = await import("@/lib/tauri-bridge");
+
+      const configPath = glazeConfigPath ?? (await getGlazeConfigPath());
+      if (configPath) {
+        const appDataDir = await getAppDataDir();
+        if (appDataDir) {
+          try {
+            await archiveConfig(configPath, appDataDir + "\\history");
+          } catch {
+            // archive failure is non-fatal
+          }
+        }
+        await writeConfigFile(configPath, state.currentYaml);
+        saveConfig("Saved to disk");
+        const reloaded = await sendIpcReload();
+        addToast(
+          "success",
+          reloaded
+            ? "Saved & GlazeWM reloaded ✓"
+            : "Saved to config.yaml (GlazeWM not running)"
+        );
+      } else {
+        saveConfig("Manual save");
+        addToast("warning", "GlazeWM not found — saved to app storage only");
+      }
+    } catch (e) {
+      saveConfig("Manual save");
+      addToast("error", `Save failed: ${e instanceof Error ? e.message : String(e)}`);
+    }
+  }, [saveConfig, addToast, state.currentYaml, state.parseError, glazeConfigPath]);
 
   const handleOpenFile = useCallback(async () => {
     try {
@@ -57,7 +128,7 @@ export default function App() {
       setYaml(content);
       addToast("success", `Loaded: ${path.split(/[\\/]/).pop()}`);
     } catch {
-      addToast("error", "Could not open file — are you running the desktop app?");
+      addToast("error", "Could not open file");
     }
   }, [setYaml, addToast]);
 
@@ -121,51 +192,19 @@ export default function App() {
 
   return (
     <div className="flex flex-col h-screen bg-surface-0 select-none">
-      {/* Title bar */}
-      <div
-        className="flex items-center justify-between px-5 h-11 bg-surface-1 border-b border-surface-3 shrink-0"
-        data-tauri-drag-region
-      >
-        <div className="flex items-center gap-3">
-          <div className="flex gap-1.5">
-            <div className="w-3 h-3 rounded-full bg-red-500/80" />
-            <div className="w-3 h-3 rounded-full bg-amber-500/80" />
-            <div className="w-3 h-3 rounded-full bg-emerald-500/80" />
-          </div>
-          <span className="text-sm font-semibold text-gray-200 ml-2">
-            GlazeWM Config Editor
-          </span>
-          {activeProfile && (
-            <span className="badge badge-blue text-xs">{activeProfile.name}</span>
-          )}
-          {state.isDirty && (
-            <span className="w-2 h-2 rounded-full bg-amber-400" title="Unsaved changes" />
-          )}
-        </div>
-
-        {/* IPC status */}
-        <div className="flex items-center gap-2">
-          {state.glazeWmStatus === "running" ? (
-            <div className="flex items-center gap-1.5">
-              <Wifi size={13} className="text-emerald-400" />
-              <span className="text-xs text-emerald-400">GlazeWM running</span>
-            </div>
-          ) : state.glazeWmStatus === "stopped" ? (
-            <div className="flex items-center gap-1.5">
-              <WifiOff size={13} className="text-gray-500" />
-              <span className="text-xs text-gray-500">GlazeWM offline</span>
-            </div>
-          ) : (
-            <div className="flex items-center gap-1.5">
-              <AlertCircle size={13} className="text-gray-600" />
-              <span className="text-xs text-gray-600">Status unknown</span>
-            </div>
-          )}
-        </div>
-      </div>
-
       {/* Toolbar */}
       <div className="flex items-center gap-1 px-4 h-10 bg-surface-1 border-b border-surface-3 shrink-0">
+        {/* App title + status */}
+        <span className="text-sm font-semibold text-gray-300 mr-2">GlazeWM Config Editor</span>
+        {activeProfile && (
+          <span className="badge badge-blue text-xs">{activeProfile.name}</span>
+        )}
+        {state.isDirty && (
+          <span className="w-2 h-2 rounded-full bg-amber-400 shrink-0" title="Unsaved changes" />
+        )}
+
+        <div className="w-px h-5 bg-surface-4 mx-2" />
+
         {/* File actions */}
         <button onClick={handleOpenFile} className="btn-ghost flex items-center gap-1.5 text-xs py-1">
           <FolderOpen size={13} />
@@ -220,6 +259,24 @@ export default function App() {
 
         <div className="flex-1" />
 
+        {/* GlazeWM status */}
+        {state.glazeWmStatus === "running" ? (
+          <div className="flex items-center gap-1.5 mr-2">
+            <Wifi size={13} className="text-emerald-400" />
+            <span className="text-xs text-emerald-400">GlazeWM running</span>
+          </div>
+        ) : state.glazeWmStatus === "stopped" ? (
+          <div className="flex items-center gap-1.5 mr-2">
+            <WifiOff size={13} className="text-gray-500" />
+            <span className="text-xs text-gray-500">GlazeWM offline</span>
+          </div>
+        ) : (
+          <div className="flex items-center gap-1.5 mr-2">
+            <AlertCircle size={13} className="text-gray-600" />
+            <span className="text-xs text-gray-600">Checking…</span>
+          </div>
+        )}
+
         {/* Side panel toggles */}
         <button
           onClick={() => setSidePanel(sidePanel === "profiles" ? null : "profiles")}
@@ -242,10 +299,10 @@ export default function App() {
 
         <div className="w-px h-5 bg-surface-4 mx-1" />
 
-        {/* Save button — floats and pulses when dirty */}
+        {/* Save */}
         <button
           onClick={handleSave}
-          disabled={!state.isDirty && state.parseError === null}
+          disabled={!state.isDirty && !state.parseError}
           className={`btn-primary flex items-center gap-1.5 text-xs py-1.5 ${
             state.isDirty && !state.parseError ? "save-pulse" : ""
           }`}
@@ -257,9 +314,7 @@ export default function App() {
 
       {/* Main content */}
       <div className="flex flex-1 min-h-0">
-        {/* Editor area */}
         <div className="flex-1 min-w-0 flex">
-          {/* Visual editor */}
           <div
             className={`flex-1 min-w-0 transition-all duration-200 ${
               state.showYamlEditor ? "w-1/2" : "w-full"
@@ -281,16 +336,16 @@ export default function App() {
             )}
           </div>
 
-          {/* YAML editor — split pane */}
           {state.showYamlEditor && (
             <div className="w-1/2 border-l border-surface-3 bg-surface-1 flex flex-col min-h-0 slide-in-right">
               <div className="flex items-center gap-2 px-4 h-8 border-b border-surface-3 shrink-0">
                 <Code2 size={12} className="text-gray-500" />
-                <span className="text-xs text-gray-500 font-mono">config.yaml</span>
-                {state.parseError && (
+                <span className="text-xs text-gray-500 font-mono">
+                  {glazeConfigPath ?? "config.yaml"}
+                </span>
+                {state.parseError ? (
                   <span className="badge badge-red ml-auto">Parse error</span>
-                )}
-                {!state.parseError && (
+                ) : (
                   <span className="badge badge-green ml-auto">Valid YAML</span>
                 )}
               </div>
@@ -305,7 +360,6 @@ export default function App() {
           )}
         </div>
 
-        {/* Side panel */}
         {sidePanel && (
           <div className="w-72 border-l border-surface-3 bg-surface-1 shrink-0 slide-in-right overflow-hidden flex flex-col">
             {sidePanel === "profiles" && (
