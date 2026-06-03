@@ -6,14 +6,19 @@
     "core:default",
     "dialog:allow-open",
     "dialog:allow-save",
-    "fs:allow-read-text-file",
-    "fs:allow-write-text-file",
-    "fs:allow-create-dir",
-    "fs:allow-copy-file",
-    "fs:allow-exists",
-    "fs:scope-home-recursive",
-    "fs:scope-appdata-recursive",
-    "path:default",
-    "notification:default"
+    {
+      "identifier": "fs:allow-read-text-file",
+      "allow": [
+        { "path": "$HOME/**" },
+        { "path": "$APPDATA/**" }
+      ]
+    },
+    {
+      "identifier": "fs:allow-write-text-file",
+      "allow": [
+        { "path": "$HOME/**" },
+        { "path": "$APPDATA/**" }
+      ]
+    }
   ]
 }
