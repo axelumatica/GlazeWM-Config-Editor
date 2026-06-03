@@ -17,32 +17,32 @@ fn get_glaze_config_path() -> Result<String, String> {
 }
 
 /// Archive (copy) the current config file to a history directory with a timestamp.
-/// Returns the path of the created archive file.
 #[tauri::command]
 async fn archive_config(config_path: String, archive_dir: String) -> Result<String, String> {
     let src = PathBuf::from(&config_path);
     if !src.exists() {
         return Err(format!("Config file not found: {}", config_path));
     }
-
     let dir = PathBuf::from(&archive_dir);
     fs::create_dir_all(&dir).map_err(|e| format!("Cannot create archive dir: {e}"))?;
-
     let timestamp = Local::now().format("%Y%m%d_%H%M%S").to_string();
     let dest = dir.join(format!("config_{}.yaml", timestamp));
-
     fs::copy(&src, &dest).map_err(|e| format!("Archive copy failed: {e}"))?;
     Ok(dest.to_string_lossy().to_string())
 }
 
 /// Checks whether the glazewm process is currently running.
+/// Uses CREATE_NO_WINDOW so no terminal flashes on screen.
 #[tauri::command]
 async fn check_glazewm_running() -> bool {
     #[cfg(target_os = "windows")]
     {
-        use std::process::Command;
-        let output = Command::new("tasklist")
+        use std::os::windows::process::CommandExt;
+        const CREATE_NO_WINDOW: u32 = 0x0800_0000;
+
+        let output = std::process::Command::new("tasklist")
             .args(["/FI", "IMAGENAME eq glazewm.exe", "/NH"])
+            .creation_flags(CREATE_NO_WINDOW)
             .output();
 
         match output {
@@ -59,17 +59,18 @@ async fn check_glazewm_running() -> bool {
     }
 }
 
-/// Send a reload command to GlazeWM via its named pipe / WebSocket IPC.
-/// GlazeWM listens on a named pipe: \\.\pipe\glazewm
+/// Send a reload command to GlazeWM via the CLI.
+/// Uses CREATE_NO_WINDOW so no terminal flashes on screen.
 #[tauri::command]
 async fn send_ipc_reload() -> Result<(), String> {
     #[cfg(target_os = "windows")]
     {
-        // GlazeWM v3 uses a WebSocket on a dynamic port.
-        // Fallback: try to find the port from the lock file or use the default.
-        // For simplicity we issue a command via the glazewm CLI if it is on PATH.
+        use std::os::windows::process::CommandExt;
+        const CREATE_NO_WINDOW: u32 = 0x0800_0000;
+
         let status = std::process::Command::new("glazewm")
-            .args(["command", "--command", "wm-reload-config"])
+            .args(["command", "wm-reload-config"])
+            .creation_flags(CREATE_NO_WINDOW)
             .status()
             .map_err(|e| format!("Failed to run glazewm CLI: {e}"))?;
 

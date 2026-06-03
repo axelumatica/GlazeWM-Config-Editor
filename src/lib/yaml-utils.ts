@@ -123,7 +123,22 @@ window_rules:
       - window_title: { regex: '[Pp]icture.in.[Pp]icture' }
         window_class: { regex: 'Chrome_WidgetWin_1|MozillaDialogClass' }
 
+binding_modes:
+  - name: 'resize'
+    keybindings:
+      - commands: ['resize --width -2%']
+        bindings: ['h', 'left']
+      - commands: ['resize --width +2%']
+        bindings: ['l', 'right']
+      - commands: ['resize --height +2%']
+        bindings: ['k', 'up']
+      - commands: ['resize --height -2%']
+        bindings: ['j', 'down']
+      - commands: ['wm-disable-binding-mode --name resize']
+        bindings: ['escape', 'enter']
+
 keybindings:
+  # Focus
   - commands: ['focus --direction left']
     bindings: ['alt+h', 'alt+left']
   - commands: ['focus --direction right']
@@ -132,6 +147,8 @@ keybindings:
     bindings: ['alt+k', 'alt+up']
   - commands: ['focus --direction down']
     bindings: ['alt+j', 'alt+down']
+
+  # Move
   - commands: ['move --direction left']
     bindings: ['alt+shift+h', 'alt+shift+left']
   - commands: ['move --direction right']
@@ -140,20 +157,56 @@ keybindings:
     bindings: ['alt+shift+k', 'alt+shift+up']
   - commands: ['move --direction down']
     bindings: ['alt+shift+j', 'alt+shift+down']
+
+  # Resize
+  - commands: ['resize --width -2%']
+    bindings: ['alt+u']
+  - commands: ['resize --width +2%']
+    bindings: ['alt+p']
+  - commands: ['resize --height +2%']
+    bindings: ['alt+o']
+  - commands: ['resize --height -2%']
+    bindings: ['alt+i']
+  - commands: ['wm-enable-binding-mode --name resize']
+    bindings: ['alt+r']
+
+  # Window state
   - commands: ['toggle-floating --centered']
     bindings: ['alt+shift+space']
+  - commands: ['wm-cycle-focus']
+    bindings: ['alt+space']
   - commands: ['toggle-tiling']
     bindings: ['alt+t']
   - commands: ['toggle-fullscreen']
     bindings: ['alt+f']
   - commands: ['toggle-minimized']
     bindings: ['alt+m']
+  - commands: ['toggle-tiling-direction']
+    bindings: ['alt+v']
+
+  # WM actions
   - commands: ['close']
     bindings: ['alt+q']
   - commands: ['wm-exit']
     bindings: ['alt+shift+e']
   - commands: ['wm-reload-config']
     bindings: ['alt+shift+r']
+  - commands: ['wm-redraw']
+    bindings: ['alt+shift+w']
+  - commands: ['wm-toggle-pause']
+    bindings: ['alt+shift+p']
+
+  # Launch apps
+  - commands: ['shell-exec wt']
+    bindings: ['alt+enter']
+
+  # Workspace focus
+  - commands: ['focus --next-active-workspace']
+    bindings: ['alt+shift+s']
+  - commands: ['focus --prev-active-workspace']
+    bindings: ['alt+a']
+  - commands: ['focus --recent-workspace']
+    bindings: ['alt+d']
   - commands: ['focus --workspace 1']
     bindings: ['alt+1']
   - commands: ['focus --workspace 2']
@@ -172,6 +225,16 @@ keybindings:
     bindings: ['alt+8']
   - commands: ['focus --workspace 9']
     bindings: ['alt+9']
+
+  # Move workspace to monitor
+  - commands: ['move-workspace --direction left']
+    bindings: ['alt+shift+a']
+  - commands: ['move-workspace --direction right']
+    bindings: ['alt+shift+f']
+  - commands: ['move-workspace --direction up']
+    bindings: ['alt+shift+d']
+
+  # Move window to workspace
   - commands: ['move --workspace 1', 'focus --workspace 1']
     bindings: ['alt+shift+1']
   - commands: ['move --workspace 2', 'focus --workspace 2']

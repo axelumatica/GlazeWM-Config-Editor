@@ -7,6 +7,8 @@ export interface GlazeConfig {
   window_rules?: WindowRule[];
   binding_modes?: BindingMode[];
   keybindings?: Keybinding[];
+  ipc?: { enabled?: boolean; port?: number };
+  [key: string]: unknown;
 }
 
 export interface GeneralConfig {
